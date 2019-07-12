@@ -84,6 +84,8 @@ def getAuthInfoLink(name, university):
     while True:
         try:
             driver.get(url)
+
+            #TODO any way cancelation of the sleeptimes once if(startSear != empty)
             sleep(5)
             # print(driver.page_source)
             startSear = driver.page_source

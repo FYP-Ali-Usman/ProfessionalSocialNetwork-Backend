@@ -14,11 +14,8 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
 from django.urls import include, path
 from rest_framework import routers
-from testapi.api import views
-from django.views.decorators.csrf import csrf_exempt
 
 router = routers.DefaultRouter()
 # router.register(r'bigsearch', views.URLViewSet)
@@ -26,8 +23,11 @@ router = routers.DefaultRouter()
 # Wire up our API using automatic URL routing.
 # Additionally, we include login URLs for the browsable API.
 urlpatterns = [
-    path('bigsearch/', csrf_exempt(views.search_faculty)),
-    path('advancedsearch/', csrf_exempt(views.search_advanced_faculty)),
+    #TODO path for this application needs to be changed in the frontend too.
+    path('scrape/', include('scrape.urls')),
+
+    path('main/', include('main.urls')),
+
     path('admin/', admin.site.urls),
     path('', include(router.urls)),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework'))
