@@ -23,10 +23,12 @@ router = routers.DefaultRouter()
 # Wire up our API using automatic URL routing.
 # Additionally, we include login URLs for the browsable API.
 urlpatterns = [
-    #TODO path for this application needs to be changed in the frontend too.
+    #TODO path needs to be changed in the frontend too.
     path('scrape/', include('scrape.urls')),
 
     path('main/', include('main.urls')),
+
+    path('graph/', include('main.urls')),
 
     path('admin/', admin.site.urls),
     path('', include(router.urls)),

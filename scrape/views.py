@@ -44,26 +44,25 @@ def search_faculty(request):
         data = JSONParser().parse(request)
         serializer = URLSerializer(data=data)
         print(data)
-        print('woring3')
-        try:
-            if not re.match(regex, data[0]):
-                print("URL Validator dosen't validate the URL you provided.")
+        print(data['url'])
 
-            else:
-                uniAuth.getAuthInfoLink(data[0], data[1])
-
-                if serializer.is_valid():
-                    # upper page won't return anything so we have to either edit those pages or we can search data from database as those pages are going to save the data into the database.
-                    serializer.save()
-                    return JsonResponse(serializer.data, status=201)
-                return JsonResponse(serializer.errors, status=400)
-
-        except:
-            print("Bad request format")
-            # https://simpleisbetterthancomplex.com/tutorial/2016/07/27/how-to-return-json-encoded-response.html
+        if(re.match(regex, data['url']) is None):
+            print("URL Validator dosen't validate the URL you provided.")
             data = {
                 'bad request': True,
                 'bad format': True
+            }
+            return JsonResponse(data)
+        else:
+            uniAuth.getAuthInfoLink(data['url'], data['name'])
+
+            # if serializer.is_valid():
+            #             #     # upper page won't return anything so we have to either edit those pages or we can search data from database as those pages are going to save the data into the database.
+            #             #     serializer.save()
+            #             #     return JsonResponse(serializer.data, status=201)
+            # return JsonResponse(serializer.errors, status=200)
+            data = {
+                'done crawling': True
             }
             return JsonResponse(data)
 
@@ -89,28 +88,19 @@ def search_advanced_faculty(request):
         data = JSONParser().parse(request)
         serializer = URLSerializer(data=data)
         print(data)
-        try:
-            if not re.match(regex, data[0]):
-                print("URL Validator dosen't validate the URL you provided.")
-                data = {
-                    'bad request': True,
-                    'bad format': True
-                }
-                return JsonResponse(data)
-            else:
-    #TODO remove this method and add 3rd boolean argument in every request from frontend
-                uniAuth.getAuthInfoLink(data[0], data[1], True)
-                if serializer.is_valid():
-                    # upper page won't return anything so we have to either edit those pages or we can search data from database as those pages are going to save the data into the database.
-                    serializer.save()
-                    return JsonResponse(serializer.data, status=201)
-                return JsonResponse(serializer.errors, status=400)
-        except:
-            print("Bad request format")
-            #https://simpleisbetterthancomplex.com/tutorial/2016/07/27/how-to-return-json-encoded-response.html
+        if not re.match(regex, data['url']):
+            print("URL Validator dosen't validate the URL you provided.")
             data = {
                 'bad request': True,
                 'bad format': True
+            }
+            return JsonResponse(data)
+        else:
+            print("URL validaion successful")
+#TODO remove this method and add 3rd boolean argument in every request from frontend
+            uniAuth.getAuthInfoLink(data['url'], data['name'], True)
+            data = {
+                'done crawling': True
             }
             return JsonResponse(data)
 

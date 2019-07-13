@@ -42,10 +42,18 @@ UrlsAuth = []
 nameTo = ''
 options=FirefoxOptions()
 options.add_argument("--headless")
+
 driver = webdriver.Firefox(options=options,executable_path=r'D:\\Projects\\Python\\FYP\\Test\\scrape\\geckodriver.exe')
 
-
 newCoauthDriver = webdriver.Firefox(options=options, executable_path=r'D:\\Projects\\Python\\FYP\\Test\\scrape\\geckodriver.exe')
+
+def closeBrowserInstances():
+    driver.stop_client()
+    driver.close()
+    driver.quit()
+    newCoauthDriver.stop_client()
+    newCoauthDriver.close()
+    newCoauthDriver.quit()
 
 # 2
 def authProfileGet(startSearch):
