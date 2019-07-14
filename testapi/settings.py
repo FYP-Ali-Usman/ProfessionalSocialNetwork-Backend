@@ -34,6 +34,8 @@ CORS_ORIGIN_WHITELIST = (
     'localhost:4200'
 )
 
+# APPEND_SLASH = False
+
 # Application definition
 
 INSTALLED_APPS = [

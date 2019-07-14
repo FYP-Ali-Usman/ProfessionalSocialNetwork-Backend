@@ -6,6 +6,6 @@ urlpatterns = [
 #    path('', views.index, name = 'index'),
 
     # TODO arrange following 2 paths to scrap/big and scrap/advanced while scrap in main(testapi) view from where big and advanced divided to the respective scrap application views.py
-    path('bigsearch/', csrf_exempt(views.search_faculty)),
-    path('advancedsearch/', csrf_exempt(views.search_advanced_faculty)),
+    path('bigsearch', csrf_exempt(views.search_faculty)),
+    path('advancedsearch', csrf_exempt(views.search_advanced_faculty)),
 ]

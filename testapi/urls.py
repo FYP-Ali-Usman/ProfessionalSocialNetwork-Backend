@@ -28,7 +28,7 @@ urlpatterns = [
 
     path('main/', include('main.urls')),
 
-    path('graph/', include('main.urls')),
+    path('graph/', include('graph.urls')),
 
     path('admin/', admin.site.urls),
     path('', include(router.urls)),
