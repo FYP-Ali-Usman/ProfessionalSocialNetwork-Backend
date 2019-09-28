@@ -61,6 +61,20 @@ def closeBrowserInstances():
 
 
 # 2
+
+def singleAuthorCrawl(url):
+    if authorCol.find({'urlLink': url}).count() < 1:
+        scrapProfile(url)
+        UrlsAuth.append(url)
+    else:
+        # TODO write this in the scrapProfile, see if the totalPapers are less than records in our db then delete the old ones and scrap new or scrap from the next those are left
+        for oldAuthor in authorCol.find({'urlLink': url}):
+            oldAuthorId = oldAuthor['_id']
+            if pubCol.find({'author': oldAuthorId}).count() < 1:
+                scrapProfile(url)
+                UrlsAuth.append(url)
+
+
 def authProfileGet(startSearch):
     a = nameTo.lower()
     print(a)

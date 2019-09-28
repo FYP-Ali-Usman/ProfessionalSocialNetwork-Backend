@@ -11,6 +11,7 @@ from rest_framework.decorators import parser_classes
 from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
 from django.views.decorators.csrf import csrf_exempt
 from scrape import uniAuth
+from scrape import authorExtractM
 import re
 
 # class URLViewSet(viewsets.ModelViewSet):
@@ -36,6 +37,21 @@ regex = re.compile(
     r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
     r'(?::\d+)?'  # optional port
     r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+
+def search_author(request):
+    print('search_author called')
+    if request.method == 'POST':
+        print(request)
+        data = JSONParser().parse(request)
+        serializer = URLSerializer(data=data)
+        for i in data:
+            # authorExtractM.singleAuthorCrawl(i[:i.index('publication')+11:])
+            print(i[:i.index('publication')+11:])
+        data = {
+            'message': "Please refresh your browser"
+        }
+        return JsonResponse(data)
+
 
 def search_faculty(request):
 

@@ -299,24 +299,27 @@ def generateAuthorNetwork(personURL, org):
                 authorFullCopy['publications'].append(j)
                 # authorNetwork['publications'].append(j['_id'])
 
-                for k in j['coAuthors']:
-                    # see if this coauthor is also an author in our db
-                    for l in authorCol.find({'Name': k['name'], 'urlLink': k['linkUrl']}):
-                        if l['_id'] not in totalUniqueAuthors:
-                            totalUniqueAuthors.append(str(l['_id']))
-                        authorFullCopy['authors'].append(l)
-                        for m in pubCol.find({'author': l['_id']}):
-                            authorFullCopy['publications'].append(m)  # may insert duplicate but we'll clean it later
+                ########### next for loops will take graph to 2nd level
 
-                    # see if this coauthor is also coauthor in another publication
-                    for l in pubCol.find({"coAuthors.name": k['name'], "coAuthors.linkUrl": k['linkUrl']}):
-                        if l != j:
-                            authorFullCopy['publications'].append(l)
-                            for m in authorCol.find({'Name': l[
-                                '_id']}):  # although no need for loop as this list will contain only one element, but same case exist on many other places on this file so i stick to one way
-                                if m['_id'] not in totalUniqueAuthors:
-                                    totalUniqueAuthors.append(str(m['_id']))
-                                authorFullCopy['authors'].append(m)
+                # for k in j['coAuthors']:
+                #     # see if this coauthor is also an author in our db
+                #     for l in authorCol.find({'Name': k['name'], 'urlLink': k['linkUrl'][:k['linkUrl'].index('publication')+11:]}):
+                #         print(l['_id'])
+                #         if l['_id'] not in totalUniqueAuthors:
+                #             totalUniqueAuthors.append(str(l['_id']))
+                #         authorFullCopy['authors'].append(l)
+                #         for m in pubCol.find({'author': l['_id']}):
+                #             authorFullCopy['publications'].append(m)  # may insert duplicate but we'll clean it later
+                #
+                #     # see if this coauthor is also coauthor in another publication
+                #     for l in pubCol.find({"coAuthors.name": k['name'], "coAuthors.linkUrl": k['linkUrl']}):
+                #         if l != j:
+                #             authorFullCopy['publications'].append(l)
+                #             for m in authorCol.find({'Name': l[
+                #                 '_id']}):  # although no need for loop as this list will contain only one element, but same case exist on many other places on this file so i stick to one way
+                #                 if m['_id'] not in totalUniqueAuthors:
+                #                     totalUniqueAuthors.append(str(m['_id']))
+                #                 authorFullCopy['authors'].append(m)
 
     else:
 
@@ -463,7 +466,7 @@ def develop(request):
             # print(returnCopy['nodes'][-1])
 
             idx += 1
-            tempLinks.append(j['urlLink'])
+            tempLinks.append(j['urlLink'][:j['urlLink'].index('publication')+11:])
             tempIds.append(j['_id'])
         idx += 1
 
@@ -516,19 +519,19 @@ def develop(request):
                 tempLinksNodes['papaerLink'] = j['papaerLink']
                 tempLinksNodes['source'] = str(j['author'])
 
-                if k['linkUrl'] not in tempLinks:
+                if k['linkUrl'][:k['linkUrl'].index('publication')+11:] not in tempLinks:
                     tempNodes['id'] = str(idx1) + str(idx1) + str(idx1)
                     tempNodes['name'] = k['name']
                     tempNodes['group'] = 0
                     tempNodes['urlLink'] = k['linkUrl']
                     returnCopy['nodes'].append(tempNodes)
 
-                    tempLinks.append(k['linkUrl'])
+                    tempLinks.append(k['linkUrl'][:k['linkUrl'].index('publication')+11:])
                     tempIds.append(tempNodes['id'])
                     tempLinksNodes['target'] = tempNodes['id']
 
                 else:
-                    idx2 = tempLinks.index(k['linkUrl'])
+                    idx2 = tempLinks.index(k['linkUrl'][:k['linkUrl'].index('publication')+11:])
                     tempLinksNodes['target'] = tempIds[idx2]
 
                 returnCopy['links'].append(tempLinksNodes)
@@ -880,7 +883,7 @@ def entity(request):
         affiliation = request.GET.get('affiliation')
 
         generateAuthorNetwork(personURL, affiliation)
-        # print(authorFullCopy)
+        print(authorFullCopy['authors'])
 
         ############## Code for filling the authorReturnCopy #################
 
@@ -927,7 +930,7 @@ def entity(request):
             # print(authorReturnCopy['nodes'][-1])
 
             idx += 1
-            tempLinks.append(j['urlLink'])
+            tempLinks.append(j['urlLink'][:j['urlLink'].index('publication')+11:])
             tempIds.append(j['_id'])
         idx += 1
         authorReturnCopy['nodes'].pop(0)
@@ -991,7 +994,7 @@ def entity(request):
                 tempLinksNodes['papaerLink'] = j['papaerLink']
                 tempLinksNodes['source'] = str(j['author'])
 
-                if k['linkUrl'] not in tempLinks:  # if this is a coauthor
+                if k['linkUrl'][:k['linkUrl'].index('publication')+11:] not in tempLinks:  # if this is a coauthor
 
                     tempNodes['id'] = str(idx1) + str(idx1) + str(idx1)
                     tempNodes['name'] = k['name']
@@ -999,12 +1002,12 @@ def entity(request):
                     tempNodes['urlLink'] = k['linkUrl']
                     authorReturnCopy['nodes'].append(tempNodes)
 
-                    tempLinks.append(k['linkUrl'])
+                    tempLinks.append(k['linkUrl'][:k['linkUrl'].index('publication')+11:])
                     tempIds.append(tempNodes['id'])
                     tempLinksNodes['target'] = tempNodes['id']
 
                 else:
-                    idx2 = tempLinks.index(k['linkUrl'])
+                    idx2 = tempLinks.index(k['linkUrl'][:k['linkUrl'].index('publication')+11:])
                     tempLinksNodes['target'] = tempIds[idx2]
 
                 authorReturnCopy['links'].append(tempLinksNodes)
@@ -1043,10 +1046,12 @@ def entity(request):
             for j in newArrangement['subNetworks'][::-1]:  # check if record already exists in one subnetwork
                 # iter += 1
                 tempid = j['no_id']
-                if i['source'] in j['authors']:
+                # if i['source'] in j['authors']:
+                if str(i['source']) in str(j['authors']):
                     match = 1
                     break
-                elif i['target'] in j['coauthors']:
+                # elif i['target'] in j['coauthors']:
+                elif str(i['target']) in str(j['coauthors']):
                     match = 2
                     break
 
@@ -1121,6 +1126,7 @@ def entity(request):
         fullCoauthorId = []
         fullCoauthorNumbers = []
 
+        # for i in newArrangement['subNetworks']:
         for i in newArrangement['subNetworks']:
             authorId = []
             authorDegree = []
@@ -1161,6 +1167,9 @@ def entity(request):
         fullCoauthorId = []  # working for betweeneness centrality
         fullCoauthorNumbers = []  # working for betweeneness centrality
         shortestCoauthorLevel = [] # to know what is the level of the graph
+        #
+        # for i, ii in enumerate(newArrangement['subNetworks']):
+        #     print('{} --- {} --- {}'.format(i,ii['authors'],ii['coauthors']))
 
         for i in newArrangement['subNetworks']:
 
@@ -1213,6 +1222,9 @@ def entity(request):
                 currentStartNode = j
                 sumOfDistanceOfAllNodesFromJ = 0
                 closenessCentralityOfJ = 0
+                currentStartNodeURL = ''
+                if currentStartNode in i['authors']:
+                    currentStartNodeURL = authorCol.find({'_id':ObjectId(currentStartNode)})[0]['urlLink']
 
                 print('Path from node: {} ({}/{})'.format(j, idx3, len(totalNodes)))
 
@@ -1261,7 +1273,7 @@ def entity(request):
 
                     shortestConnectionLevel = [] # of coauthor with author
                     # this will only run for author
-                    if currentStartNode in i['authors'] and currentEndNode in i['coauthors']:
+                    if currentStartNodeURL == personURL and currentEndNode in i['coauthors']:
                         if len(result) > 0: # if they are connected
                             step = len(result[0])-1
                             for l in result[1:len(result):]:
