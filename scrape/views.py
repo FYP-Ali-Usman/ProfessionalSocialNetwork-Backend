@@ -44,9 +44,9 @@ def search_faculty(request):
         data = JSONParser().parse(request)
         serializer = URLSerializer(data=data)
         print(data)
-        print(data['url'])
+        
 
-        if(re.match(regex, data['url']) is None):
+        if(re.match(regex, data[0]) is None):
             print("URL Validator dosen't validate the URL you provided.")
             data = {
                 'bad request': True,
@@ -54,7 +54,7 @@ def search_faculty(request):
             }
             return JsonResponse(data)
         else:
-            uniAuth.getAuthInfoLink(data['url'], data['name'])
+            uniAuth.getAuthInfoLink(data[0], data[1])
 
             # if serializer.is_valid():
             #             #     # upper page won't return anything so we have to either edit those pages or we can search data from database as those pages are going to save the data into the database.
@@ -88,7 +88,7 @@ def search_advanced_faculty(request):
         data = JSONParser().parse(request)
         serializer = URLSerializer(data=data)
         print(data)
-        if not re.match(regex, data['url']):
+        if not re.match(regex, data[0]):
             print("URL Validator dosen't validate the URL you provided.")
             data = {
                 'bad request': True,
@@ -98,7 +98,7 @@ def search_advanced_faculty(request):
         else:
             print("URL validaion successful")
 #TODO remove this method and add 3rd boolean argument in every request from frontend
-            uniAuth.getAuthInfoLink(data['url'], data['name'], True)
+            uniAuth.getAuthInfoLink(data[0], data[1], True)
             data = {
                 'done crawling': True
             }
@@ -106,3 +106,5 @@ def search_advanced_faculty(request):
 
 def localApplication(request):
     pass
+
+# ===========================================================================

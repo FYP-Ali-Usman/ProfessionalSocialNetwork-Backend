@@ -6,5 +6,6 @@ urlpatterns = [
 #    path('', views.index, name = 'index'),
 
     path('generate', csrf_exempt(views.develop)),
+    path('entity', csrf_exempt(views.entity)),
 
 ]

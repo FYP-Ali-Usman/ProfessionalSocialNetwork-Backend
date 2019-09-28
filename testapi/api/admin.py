@@ -1,5 +1,3 @@
 from django.contrib import admin
-# from .models import Movie
-#
-# # Register your models here.
-# admin.site.register(Movie)
+from .models import URL as url
+admin.site.register(url)

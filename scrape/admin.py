@@ -1,3 +1,3 @@
 from django.contrib import admin
-
-# Register your models here.
+from .models import URL as url
+admin.site.register(url)

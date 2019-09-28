@@ -24,14 +24,34 @@ SECRET_KEY = '7mnngoe7ra=a2=1lln&@(t@8cg!5k-0jekrbrk7ri_h_pe9*++'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
+DATA_UPLOAD_MAX_NUMBER_FIELDS = None
+DATA_UPLOAD_MAX_MEMORY_SIZE = None
 ALLOWED_HOSTS = []
 
-# CORS_ORIGIN_ALLOW_ALL = True
+CORS_ORIGIN_ALLOW_ALL = True
 # CORS_ALLOW_CREDENTIALS = False
 
-CORS_ORIGIN_WHITELIST = (
-    'localhost:4200'
+# CORS_ORIGIN_WHITELIST = (
+#     'http://localhost:4200',
+# )
+CORS_ALLOW_HEADERS = (
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+)
+CORS_ALLOW_METHODS = (
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
 )
 
 # APPEND_SLASH = False
@@ -46,9 +66,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'phone_field',
     'testapi.api',
     'corsheaders',
-    'scrape'
+    'scrape',
+    'profiles',
+    'forum',
+    'crawlSearch',
+    'graph'
 ]
 
 # REST_FRAMEWORK = {
@@ -96,8 +121,10 @@ WSGI_APPLICATION = 'testapi.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'djongo',
+        'NAME': 'Fyp',
+        'HOST': 'localhost',
+        'PORT': 27017,
     }
 }
 
@@ -139,3 +166,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
+MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'static-server', 'media-root')
+MEDIA_URL = '/media/'
+from testapi.restconf.main import *

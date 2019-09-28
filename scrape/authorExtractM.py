@@ -2,7 +2,6 @@ from selenium.common.exceptions import NoSuchElementException, ElementClickInter
     StaleElementReferenceException
 from parsel import Selector
 import math
-from time import sleep
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.keys import Keys
@@ -10,8 +9,11 @@ from bs4 import BeautifulSoup
 import urllib.request
 import urllib.parse
 import pymongo
+from datetime import datetime
+from time import sleep
 
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
+
 # aaa='robert a. weinberg'
 # bbb='mit'
 ########################################################################
@@ -24,7 +26,7 @@ pubCol = mydb["Publications"]
 startSear = ''
 startSearch = ''
 authProfile = {'Name': '', 'urlLink': '', 'affiliation': '', 'researchInterest': [], 'totalPaper': '',
-               'totalCoAuthor': '', 'totalCitation': ''}
+               'totalCitation': ''}
 authList = []
 url = ''
 publications = []
@@ -40,12 +42,14 @@ publicatio = {
 urlss = ''
 UrlsAuth = []
 nameTo = ''
-options=FirefoxOptions()
+options = FirefoxOptions()
 options.add_argument("--headless")
 
-driver = webdriver.Firefox(options=options,executable_path=r'D:\\Projects\\Python\\FYP\\Test\\scrape\\geckodriver.exe')
+driver = webdriver.Firefox(options=options,
+                           executable_path=r'C:\\MyData\\semester 8\\FYP\\Python\\FYP\\geckodriver.exe')
 
-newCoauthDriver = webdriver.Firefox(options=options, executable_path=r'D:\\Projects\\Python\\FYP\\Test\\scrape\\geckodriver.exe')
+newCoauthDriver = webdriver.Firefox(options=options, executable_path=r'C:\\MyData\\semester 8\\FYP\\Python\\FYP\\geckodriver.exe')
+
 
 def closeBrowserInstances():
     driver.stop_client()
@@ -55,10 +59,12 @@ def closeBrowserInstances():
     newCoauthDriver.close()
     newCoauthDriver.quit()
 
+
 # 2
 def authProfileGet(startSearch):
     a = nameTo.lower()
     print(a)
+    # print(startSearch)
     soup = BeautifulSoup(str(startSearch), 'html.parser')
     try:
         name = soup.find_all('a', {'class': 'au-target', 'aria-label': 'Name',
@@ -76,8 +82,18 @@ def authProfileGet(startSearch):
             # authProfile['Name'] = names.get_text().strip()
             # authList.append(authProfile)
             # print(url)
-            scrapProfile(url)
-            UrlsAuth.append(url)
+
+            if authorCol.find({'urlLink': url}).count() < 1:
+                scrapProfile(url)
+                UrlsAuth.append(url)
+            else:
+                # TODO write this in the scrapProfile, see if the totalPapers are less than records in our db then delete the old ones and scrap new or scrap from the next those are left
+                for oldAuthor in authorCol.find({'urlLink': url}):
+                    oldAuthorId = oldAuthor['_id']
+                    if pubCol.find({'author': oldAuthorId}).count() < 1:
+                        scrapProfile(url)
+                        UrlsAuth.append(url)
+
     print(UrlsAuth)
     print(len(UrlsAuth))
 
@@ -91,11 +107,21 @@ def getAuthInfoLink(name, university):
     url = 'https://academic.microsoft.com/search?q=' + newUrl + '&f=&orderBy=0&skip=0&take=10'
     while True:
         try:
-            driver.get(url)
+            now = datetime.now()
+            current_time = now.strftime("%H:%M:%S")
+            print("Staring time of getting author Info =", current_time)
 
-            #TODO any way cancelation of the sleeptimes once if(startSear != empty)
-            sleep(5)
-            # print(driver.page_source)
+            driver.get(url)
+            wait = True
+            while wait:
+                if driver.page_source != '':
+                    wait = False
+
+            now = datetime.now()
+            current_time = now.strftime("%H:%M:%S")
+            print("Ending time of getting author Info =", current_time)
+
+            sleep(4)
             startSear = driver.page_source
         except TimeoutException as ex:
             print('internet is slow, error occured in searching author, trying again')
@@ -116,9 +142,21 @@ def getAuthInfoLink(name, university):
 def completeProfileSouceUrl(linkk):
     while True:
         try:
+            now = datetime.now()
+            current_time = now.strftime("%H:%M:%S")
+            print("Staring time of getting profile source =", current_time)
+
             driver.get(linkk)
-            sleep(10)
-            # print(driver.page_source)
+            wait = True
+            while wait:
+                if driver.page_source != '':
+                    wait = False
+
+            now = datetime.now()
+            current_time = now.strftime("%H:%M:%S")
+            print("Ending time of getting profile source =", current_time)
+
+            sleep(4)
             return driver.page_source
         except TimeoutException as ex:
             print('internet is slow, error occured in getting profile url, trying again')
@@ -130,13 +168,26 @@ def completeProfileSouceUrl(linkk):
 
 
 # getting coauthers method called below
-def getCoauthInfo(tileLi, name):
+def getCoauthInfo(tileLi, namee):
     soursou = ''
 
     while True:
         try:
+            now = datetime.now()
+            current_time = now.strftime("%H:%M:%S")
+            print("Staring time of getting coauthor Info =", current_time)
+
             newCoauthDriver.get(tileLi)
-            sleep(8)
+            wait = True
+            while wait:
+                if newCoauthDriver.page_source != '':
+                    wait = False
+
+            now = datetime.now()
+            current_time = now.strftime("%H:%M:%S")
+            print("Ending time of getting coauthor Info =", current_time)
+
+            sleep(4)
             soursou = newCoauthDriver.page_source
         except TimeoutException as ex:
             print('internet is slow, error occured in searching publication, trying again')
@@ -152,21 +203,51 @@ def getCoauthInfo(tileLi, name):
         staleCounter = 0
         while True:
             staleCounter += 1
-            if staleCounter <= 5:
-                break
             try:
                 # newCoauthDriver.find_element_by_xpath('//*[@au-target-id="215"]')
                 moreButton = newCoauthDriver.find_element_by_xpath('//*[@class="au-target show-more"]')
+
+                now = datetime.now()
+                current_time = now.strftime("%H:%M:%S")
+                print("Staring time of getting more button data of coauthor =", current_time)
+
                 moreButton.click()
-                sleep(10)
-            except StaleElementReferenceException:
+                wait = True
+                while wait:
+                    if newCoauthDriver.page_source != '':
+                        wait = False
+
+                now = datetime.now()
+                current_time = now.strftime("%H:%M:%S")
+                print("Ending time of getting more button data of coauthor =", current_time)
+
+                sleep(3)
+            except NoSuchElementException:
                 print('retrying to click "see more button"')
+                if staleCounter >= 5:
+                    break
+                else:
+                    continue
             else:
                 break
 
         soursou = newCoauthDriver.page_source
-        spanss = newCoauthDriver.find_element_by_xpath(
-            '/html/body/div/div/div/router-view/compose[1]/ma-edp/div/div/ma-entity-detail-info/compose/div/div/div[1]/ma-author-string-collection')
+
+        while True:
+            try:
+                spanss = newCoauthDriver.find_element_by_xpath(
+                    '/html/body/div[2]/div/div/router-view/compose[1]/div/div/ma-entity-detail-info/compose/div/div/div[1]/ma-author-string-collection')
+            except NoSuchElementException:
+                try:
+                    spanss = newCoauthDriver.find_element_by_xpath(
+                        '/html/body/div/div/div/router-view/compose[1]/div/div/ma-entity-detail-info/compose/div/div/div[1]/ma-author-string-collection')
+                except NoSuchElementException:
+                    continue
+                else:
+                    break
+            else:
+                break
+
         span = spanss.find_elements_by_tag_name('span')
         # soup = BeautifulSoup(str(soursou), 'html.parser')
         # span = soup.find_all('span', {'class': 'author-item au-target', 'show.bind': 'author.displayName'})
@@ -174,16 +255,15 @@ def getCoauthInfo(tileLi, name):
         for coauth in span:
             llll = coauth.find_element_by_tag_name('a')
 
-            if llll.text.strip() != name:
+            if llll.text.strip() != namee:
                 ddd['name'] = llll.text.strip()
                 ddd['linkUrl'] = llll.get_attribute('href')
-            coauthors.append(ddd.copy())
+                coauthors.append(ddd.copy())
 
     except NoSuchElementException:
         print('can not find "show more" button.')
     except ElementClickInterceptedException:
         print('"show more" button is not clickable or can not find it.')
-
 
     # print(coauthors)
     return coauthors
@@ -217,15 +297,14 @@ def scrapProfile(lliik):
     # print(researchInterest)
     total = soup.find_all('div', {'class': 'count'})
     totalPaper = total[0].get_text().strip()
-    totalCoAuthor = total[1].get_text().strip()
-    totalCitation = total[2].get_text().strip()
+    totalCitation = total[1].get_text().strip()
 
     authProfile['urlLink'] = urlLink
     authProfile['Name'] = name
     authProfile['affiliation'] = affiliation
     authProfile['researchInterest'] = researchInterest
     authProfile['totalPaper'] = totalPaper
-    authProfile['totalCoAuthor'] = totalCoAuthor
+    # authProfile['totalCoAuthor'] = totalCoAuthor
     authProfile['totalCitation'] = totalCitation
 
     # ####################################################
@@ -237,7 +316,8 @@ def scrapProfile(lliik):
     print(authList)
     #     publication extract
     # passl = 0
-    a = int(totalPaper) / 10
+    bb = ''.join(i for i in totalPaper if i.isdigit())
+    a = int(bb) / 10
     loops = math.ceil(a)
     for i in range(loops):
         # passl += 1
@@ -290,8 +370,22 @@ def scrapProfile(lliik):
             nextButton = driver.find_element_by_xpath('//*[@aria-label="Next page"]')
         except NoSuchElementException:
             return None
+
+        now = datetime.now()
+        current_time = now.strftime("%H:%M:%S")
+        print("Staring time of getting next button data =", current_time)
+
         nextButton.click()
-        sleep(15)
+        wait = True
+        while wait:
+            if driver.page_source != '':
+                wait = False
+
+        now = datetime.now()
+        current_time = now.strftime("%H:%M:%S")
+        print("Ending time of getting next button data =", current_time)
+
+        sleep(3)
         soursou = driver.page_source
 
         #######authgors
