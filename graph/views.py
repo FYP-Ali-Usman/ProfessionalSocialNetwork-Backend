@@ -301,25 +301,25 @@ def generateAuthorNetwork(personURL, org):
 
                 ########### next for loops will take graph to 2nd level
 
-                # for k in j['coAuthors']:
-                #     # see if this coauthor is also an author in our db
-                #     for l in authorCol.find({'Name': k['name'], 'urlLink': k['linkUrl'][:k['linkUrl'].index('publication')+11:]}):
-                #         print(l['_id'])
-                #         if l['_id'] not in totalUniqueAuthors:
-                #             totalUniqueAuthors.append(str(l['_id']))
-                #         authorFullCopy['authors'].append(l)
-                #         for m in pubCol.find({'author': l['_id']}):
-                #             authorFullCopy['publications'].append(m)  # may insert duplicate but we'll clean it later
-                #
-                #     # see if this coauthor is also coauthor in another publication
-                #     for l in pubCol.find({"coAuthors.name": k['name'], "coAuthors.linkUrl": k['linkUrl']}):
-                #         if l != j:
-                #             authorFullCopy['publications'].append(l)
-                #             for m in authorCol.find({'Name': l[
-                #                 '_id']}):  # although no need for loop as this list will contain only one element, but same case exist on many other places on this file so i stick to one way
-                #                 if m['_id'] not in totalUniqueAuthors:
-                #                     totalUniqueAuthors.append(str(m['_id']))
-                #                 authorFullCopy['authors'].append(m)
+                for k in j['coAuthors']:
+                    # see if this coauthor is also an author in our db
+                    for l in authorCol.find({'Name': k['name'], 'urlLink': k['linkUrl'][:k['linkUrl'].index('publication')+11:]}):
+                        print(l['_id'])
+                        if l['_id'] not in totalUniqueAuthors:
+                            totalUniqueAuthors.append(str(l['_id']))
+                        authorFullCopy['authors'].append(l)
+                        for m in pubCol.find({'author': l['_id']}):
+                            authorFullCopy['publications'].append(m)  # may insert duplicate but we'll clean it later
+
+                    # see if this coauthor is also coauthor in another publication
+                    for l in pubCol.find({"coAuthors.name": k['name'], "coAuthors.linkUrl": k['linkUrl']}):
+                        if l != j:
+                            authorFullCopy['publications'].append(l)
+                            for m in authorCol.find({'Name': l[
+                                '_id']}):  # although no need for loop as this list will contain only one element, but same case exist on many other places on this file so i stick to one way
+                                if m['_id'] not in totalUniqueAuthors:
+                                    totalUniqueAuthors.append(str(m['_id']))
+                                authorFullCopy['authors'].append(m)
 
     else:
 
@@ -461,19 +461,31 @@ def develop(request):
             tempNodes['researchInterest'] = j['researchInterest']
             tempNodes['totalPaper'] = j['totalPaper']
             tempNodes['totalCitation'] = j['totalCitation']
-            # print(tempNodes)
+            print(tempNodes)
             returnCopy['nodes'].append(tempNodes)
             # print(returnCopy['nodes'][-1])
 
             idx += 1
             tempLinks.append(j['urlLink'][:j['urlLink'].index('publication')+11:])
             tempIds.append(j['_id'])
+
+            # print("templinks are here.")
+            # print(tempLinks)
+            # print("tempIds are here.")
+            # print(tempIds)
         idx += 1
 
         # print(returnCopy['nodes'])
         returnCopy['nodes'].pop(0)
 
-        for j in FullCopy['publications'][1:]:
+        seenPublications = set()
+        uniquePublications = []
+        for obj in authorFullCopy['publications'][1:]:
+            if obj['_id'] not in seenPublications:
+                uniquePublications.append(obj)
+                seenPublications.add(obj['_id'])
+
+        for j in uniquePublications:
             # an array to check duplicate coauthors (a previous programming mistake was corrected so this part of code is not needed actually)
 
             if j == None:
@@ -483,7 +495,7 @@ def develop(request):
             for k in j['coAuthors']:
                 if k['name'] == '' and k['linkUrl'] == '' or k['linkUrl'] in duplicateCoauhthorCheck:
                     continue
-
+                # print("k-coauthors are here.",k)
                 duplicateCoauhthorCheck.append(k['linkUrl'])
 
                 tempNodes = {
@@ -532,7 +544,7 @@ def develop(request):
 
                 else:
                     idx2 = tempLinks.index(k['linkUrl'][:k['linkUrl'].index('publication')+11:])
-                    tempLinksNodes['target'] = tempIds[idx2]
+                    tempLinksNodes['target'] = str(tempIds[idx2])
 
                 returnCopy['links'].append(tempLinksNodes)
 
@@ -883,7 +895,7 @@ def entity(request):
         affiliation = request.GET.get('affiliation')
 
         generateAuthorNetwork(personURL, affiliation)
-        print(authorFullCopy['authors'])
+        # print(authorFullCopy['authors'])
 
         ############## Code for filling the authorReturnCopy #################
 
@@ -954,9 +966,26 @@ def entity(request):
         #          for i in range(len(number_of_colors))]
         print(color)
 
-        for j in authorFullCopy['publications'][1:]:
+        # removing duplicate publications
 
+        seenPublications = set()
+        uniquePublications = []
+        for obj in authorFullCopy['publications'][1:]:
+            if obj['_id'] not in seenPublications:
+                uniquePublications.append(obj)
+                seenPublications.add(obj['_id'])
+        # for j in uniquePublications:
+        #     for k in j['coAuthors']:
+        #         print(k['name'])
+
+        # print("tempLinks are here.", tempLinks)
+        # print("tempIds are here.", tempIds)
+        # print(len(uniquePublications))
+        # for j in authorFullCopy['publications'][1:]:
+        for j in uniquePublications:
+            # print(len(j['coAuthors']))
             for k in j['coAuthors']:
+                # print("k-coauthors are here.",k['name'])
 
                 tempNodes = {
                     'id': '',
@@ -994,6 +1023,7 @@ def entity(request):
                 tempLinksNodes['papaerLink'] = j['papaerLink']
                 tempLinksNodes['source'] = str(j['author'])
 
+                # print("kLink: ",k['linkUrl'][:k['linkUrl'].index('publication')+11:])
                 if k['linkUrl'][:k['linkUrl'].index('publication')+11:] not in tempLinks:  # if this is a coauthor
 
                     tempNodes['id'] = str(idx1) + str(idx1) + str(idx1)
@@ -1006,10 +1036,14 @@ def entity(request):
                     tempIds.append(tempNodes['id'])
                     tempLinksNodes['target'] = tempNodes['id']
 
-                else:
+                elif k['linkUrl'][:k['linkUrl'].index('publication')+11:] in tempLinks:
                     idx2 = tempLinks.index(k['linkUrl'][:k['linkUrl'].index('publication')+11:])
-                    tempLinksNodes['target'] = tempIds[idx2]
+                    # print(k['linkUrl'][:k['linkUrl'].index('publication') + 11:])
+                    # print(k['name'])
+                    # print(str(tempIds[idx2]))
+                    tempLinksNodes['target'] = str(tempIds[idx2])
 
+                # print(tempLinksNodes)
                 authorReturnCopy['links'].append(tempLinksNodes)
 
                 idx1 += 1
