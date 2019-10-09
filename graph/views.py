@@ -158,7 +158,10 @@ authorReturnCopy = {
             'papaerLink': '',
             'color': ''
         }
-    ]
+    ],
+    'shortestPaths': {
+
+    }
 }
 
 # data arrangement for centrality approaches
@@ -461,7 +464,7 @@ def develop(request):
             tempNodes['researchInterest'] = j['researchInterest']
             tempNodes['totalPaper'] = j['totalPaper']
             tempNodes['totalCitation'] = j['totalCitation']
-            print(tempNodes)
+            # print(tempNodes)
             returnCopy['nodes'].append(tempNodes)
             # print(returnCopy['nodes'][-1])
 
@@ -875,6 +878,7 @@ def entity(request):
                 'color': ''
             }
         ]
+        authorReturnCopy['shortestPaths'] = {}
 
         newArrangement['subNetworks'] = [
             {
@@ -1260,6 +1264,13 @@ def entity(request):
                 if currentStartNode in i['authors']:
                     currentStartNodeURL = authorCol.find({'_id':ObjectId(currentStartNode)})[0]['urlLink']
 
+                pathsFromPersonURL = {} # all shortest paths from the searched node
+                if currentStartNodeURL == personURL:
+                    for k in totalNodes:
+                        if k == currentStartNode:
+                            continue
+                        pathsFromPersonURL[k] = []
+
                 print('Path from node: {} ({}/{})'.format(j, idx3, len(totalNodes)))
 
                 # find shortes path from j to j+1 and others except with itself
@@ -1337,9 +1348,15 @@ def entity(request):
                         if l == shortestDistance:
                             noOfShortestDistances += 1
                             allShortestPaths.append(result[idx])
+                            if currentStartNodeURL == personURL:
+                                # pathsFromPersonURL[currentEndNode].append()
+                                pathsFromPersonURL[currentEndNode].append(result[idx])
                     noOfShortestPaths.append(noOfShortestDistances)
 
                     sumOfDistanceOfAllNodesFromJ += shortestDistance
+
+                if currentStartNodeURL == personURL:
+                    authorReturnCopy['shortestPaths'] = pathsFromPersonURL
 
                 # print(sumOfDistanceOfAllNodesFromJ)
                 try:
