@@ -11,6 +11,7 @@ import urllib.parse
 import pymongo
 from datetime import datetime
 from time import sleep
+import re
 
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 
@@ -45,10 +46,9 @@ nameTo = ''
 options = FirefoxOptions()
 options.add_argument("--headless")
 
-driver = webdriver.Firefox(options=options,
-                           executable_path=r'E:\\project\\Python\\FYP\\Test\\scrape\\geckodriver.exe')
+driver = webdriver.Firefox(options=options,executable_path=r'E:\\project\\Python\\FYP\\Test\\scrape\\geckodriver.exe')
 
-newCoauthDriver = webdriver.Firefox(options=options, executable_path=r'E:\\project\\Python\\FYP\\Test\\scrape\\geckodriver.exe')
+newCoauthDriver = webdriver.Firefox(options=options,executable_path=r'E:\\project\\Python\\FYP\\Test\\scrape\\geckodriver.exe')
 
 
 def closeBrowserInstances():
@@ -62,21 +62,19 @@ def closeBrowserInstances():
 
 # 2
 
-def singleAuthorCrawl(url):
-    if authorCol.find({'urlLink': url}).count() < 1:
-        scrapProfile(url)
-        UrlsAuth.append(url)
+def singleAuthorCrawl(name):
+    if authorCol.find({'Name': name}).count() < 1:
+        getAuthInfoLink(name)
     else:
         # TODO write this in the scrapProfile, see if the totalPapers are less than records in our db then delete the old ones and scrap new or scrap from the next those are left
         for oldAuthor in authorCol.find({'urlLink': url}):
             oldAuthorId = oldAuthor['_id']
             if pubCol.find({'author': oldAuthorId}).count() < 1:
-                scrapProfile(url)
-                UrlsAuth.append(url)
+                getAuthInfoLink(name)
 
 
-def authProfileGet(startSearch):
-    a = nameTo.lower()
+def authProfileGet(startSearch,name4):
+    a = name4.lower()
     print(a)
     # print(startSearch)
     soup = BeautifulSoup(str(startSearch), 'html.parser')
@@ -89,8 +87,9 @@ def authProfileGet(startSearch):
         name = []
         return None
     for names in name:
-        # print(names.get_text().strip().lower())
-        if a == names.get_text().strip().lower():
+        print(names)
+        tx=re.search(".*"+str(a)+".*",names.get_text().strip().lower())
+        if (tx):
             href = names.attrs['href']
             url = 'https://academic.microsoft.com/' + href
             # authProfile['Name'] = names.get_text().strip()
@@ -107,16 +106,17 @@ def authProfileGet(startSearch):
                     if pubCol.find({'author': oldAuthorId}).count() < 1:
                         scrapProfile(url)
                         UrlsAuth.append(url)
-
+    
     print(UrlsAuth)
     print(len(UrlsAuth))
 
 
-def getAuthInfoLink(name, university):
+# *********
+def getAuthInfoLink(name):
     global startSearc
     global nameTo
     nameTo = name
-    query = name + ' ' + university
+    query = name
     newUrl = urllib.parse.quote(query)
     url = 'https://academic.microsoft.com/search?q=' + newUrl + '&f=&orderBy=0&skip=0&take=10'
     while True:
@@ -145,7 +145,7 @@ def getAuthInfoLink(name, university):
             print("successfull in searching author")
             break
     # 3 execute method
-    authProfileGet(startSear)
+    authProfileGet(startSear,name)
 
 
 # 1
@@ -403,6 +403,7 @@ def scrapProfile(lliik):
         soursou = driver.page_source
 
         #######authgors
+    
 
 
 # print authors url

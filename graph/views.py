@@ -239,7 +239,7 @@ def generateNetwork(org):
 
 
 # generate the network of author
-def generateAuthorNetwork(personURL, org):
+def generateAuthorNetwork(personURL, org, expand):
     # empty the objects before precessing
 
     authorFullCopy['author'] = ''
@@ -277,6 +277,7 @@ def generateAuthorNetwork(personURL, org):
     authorFullCopy['organization'] = org
 
     print((personURL))
+    print(expand)
     # for x in (pubCol.find({"coAuthors.linkUrl": personURL})):
     #     print(x)
     # print('count is')
@@ -291,6 +292,7 @@ def generateAuthorNetwork(personURL, org):
     # is said "may be" because some user may directly put the URl into the link without searching on our web
 
     if authorCol.find({"urlLink": personURL}).count() > 0:
+        print(authorCol.find({"urlLink": personURL}).count())
 
         for x in authorCol.find({"urlLink": personURL}):
             if x['_id'] not in totalUniqueAuthors:
@@ -304,25 +306,26 @@ def generateAuthorNetwork(personURL, org):
 
                 ########### next for loops will take graph to 2nd level
 
-                for k in j['coAuthors']:
-                    # see if this coauthor is also an author in our db
-                    for l in authorCol.find({'Name': k['name'], 'urlLink': k['linkUrl'][:k['linkUrl'].index('publication')+11:]}):
-                        print(l['_id'])
-                        if l['_id'] not in totalUniqueAuthors:
-                            totalUniqueAuthors.append(str(l['_id']))
-                        authorFullCopy['authors'].append(l)
-                        for m in pubCol.find({'author': l['_id']}):
-                            authorFullCopy['publications'].append(m)  # may insert duplicate but we'll clean it later
+                if expand == 'true':
+                    for k in j['coAuthors']:
+                        # see if this coauthor is also an author in our db
+                        for l in authorCol.find({'Name': k['name'], 'urlLink': k['linkUrl'][:k['linkUrl'].index('publication')+11:]}):
+                            print(l['_id'])
+                            if l['_id'] not in totalUniqueAuthors:
+                                totalUniqueAuthors.append(str(l['_id']))
+                            authorFullCopy['authors'].append(l)
+                            for m in pubCol.find({'author': l['_id']}):
+                                authorFullCopy['publications'].append(m)  # may insert duplicate but we'll clean it later
 
-                    # see if this coauthor is also coauthor in another publication
-                    for l in pubCol.find({"coAuthors.name": k['name'], "coAuthors.linkUrl": k['linkUrl']}):
-                        if l != j:
-                            authorFullCopy['publications'].append(l)
-                            for m in authorCol.find({'Name': l[
-                                '_id']}):  # although no need for loop as this list will contain only one element, but same case exist on many other places on this file so i stick to one way
-                                if m['_id'] not in totalUniqueAuthors:
-                                    totalUniqueAuthors.append(str(m['_id']))
-                                authorFullCopy['authors'].append(m)
+                        # see if this coauthor is also coauthor in another publication
+                        for l in pubCol.find({"coAuthors.name": k['name'], "coAuthors.linkUrl": k['linkUrl']}):
+                            if l != j:
+                                authorFullCopy['publications'].append(l)
+                                for m in authorCol.find({'Name': l[
+                                    '_id']}):  # although no need for loop as this list will contain only one element, but same case exist on many other places on this file so i stick to one way
+                                    if m['_id'] not in totalUniqueAuthors:
+                                        totalUniqueAuthors.append(str(m['_id']))
+                                    authorFullCopy['authors'].append(m)
 
     else:
 
@@ -897,8 +900,9 @@ def entity(request):
 
         personURL = request.GET.get('nodeId')
         affiliation = request.GET.get('affiliation')
+        expand = request.GET.get('expand')
 
-        generateAuthorNetwork(personURL, affiliation)
+        generateAuthorNetwork(personURL, affiliation, expand)
         # print(authorFullCopy['authors'])
 
         ############## Code for filling the authorReturnCopy #################

@@ -10,6 +10,9 @@ from rest_framework.decorators import api_view, throttle_classes, permission_cla
 import json
 from bson import ObjectId
 import re
+from crawlSearch import scrapAuth
+from crawlSearch import authorExtractl
+
 
 # ===================================================
 myclient = pymongo.MongoClient("localhost", 27017)
@@ -24,13 +27,26 @@ class AuthorSearch(APIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
     def get(self, request, format=None):
         query=str(request.GET.get('name',None))
-        data=authorCol.find({"Name":re.compile(".*"+query+".*", re.IGNORECASE)})
-        authors=[]
-        for i in data:
-            data2=json.dumps(i, default=json_util.default)
-            authors.append(data2)
+        data=authorCol.find({"Name":{ "$regex": "^"+query, "$options": "i" }})
+        print(data)
+        if data.count()==0:
+            for i in range(1):
+                scrapAuth.getAuthInfoLink(query)
+            data1=authorCol.find({"Name":re.compile(".*"+query+".*",re.IGNORECASE)})
+            authors=[]
+            for i in data1:
+                data2=json.dumps(i, default=json_util.default)
+                authors.append(data2)
+        else:
+            data1=authorCol.find({"Name":re.compile(".*"+query+".*",re.IGNORECASE)})
+            authors=[]
+            for i in data1:
+                data2=json.dumps(i, default=json_util.default)
+                authors.append(data2)
+            # scrapAuth.getAuthInfoLink(query)
         # print(authors)
         return Response(authors)
+        scrapAuth.getAuthInfoLink(query)
 
 class OneAuthorSearch(APIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
@@ -58,4 +74,18 @@ class PublSearch(APIView):
 
 class CoautherSearch(APIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
-    
+    def get(self, request, format=None):
+        query=str(request.GET.get('url',None))
+        print(query)
+        urll=str(query[:query.index('publication')+11:])
+        print(urll)
+        for i in range(1):
+            authorExtractl.singleAuthorCrawl(urll)
+        data1=authorCol.find({'urlLink': urll}, {'urlLink': 1})
+        authors=[]
+        for i in data1:
+            data2=json.dumps(i, default=json_util.default)
+            authors.append(data2)
+        print(authors)
+        return Response(authors)
+

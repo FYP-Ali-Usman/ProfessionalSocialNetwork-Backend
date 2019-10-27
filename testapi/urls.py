@@ -35,6 +35,7 @@ urlpatterns = [
     path('forum/', include('forum.api.urls')),
     path('search/', include('crawlSearch.urls')),
     path('graph/', include('graph.urls')),
+    path('recommend/', include('recommends.urls')),
 
     path('admin/', admin.site.urls),
     path('', include(router.urls)),
