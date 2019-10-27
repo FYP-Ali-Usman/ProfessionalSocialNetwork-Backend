@@ -277,7 +277,6 @@ def generateAuthorNetwork(personURL, org, expand):
     authorFullCopy['organization'] = org
 
     print((personURL))
-    print(expand)
     # for x in (pubCol.find({"coAuthors.linkUrl": personURL})):
     #     print(x)
     # print('count is')
