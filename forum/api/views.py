@@ -196,3 +196,16 @@ class CommentDetailApiView(mixins.CreateModelMixin, mixins.RetrieveModelMixin, g
             qs = qs.filter(article_id=passed_id2)
         return qs
 
+class ArticleDetailPubApiView(mixins.CreateModelMixin, mixins.RetrieveModelMixin, generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+    # pagination_class = ApiPagination
+    # authentication_classes = [SessionAuthentication, BasicAuthentication]
+    serializer_class = ArticleSerializer
+    # queryset = Article.objects.all()
+    def get_queryset(self):
+        request = self.request
+        passed_id2 = request.GET.get('id',None)
+        qs = Article.objects
+        if passed_id2 is not None:
+            qs = qs.filter(paperId=passed_id2)
+        return qs

@@ -73,7 +73,8 @@ INSTALLED_APPS = [
     'profiles',
     'forum',
     'crawlSearch',
-    'graph'
+    'graph',
+    'recommends'
 ]
 
 # REST_FRAMEWORK = {

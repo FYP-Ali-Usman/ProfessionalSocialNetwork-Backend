@@ -50,6 +50,7 @@ class Article(models.Model):
     tags     =models.TextField(blank=True , null=True)
     favourites = models.PositiveIntegerField(blank=True , null=True)
     Updated_at = models.DateTimeField(auto_now=True)
+    paperId = models.CharField(max_length = 500,blank=True , null=True)
     # def get_tags(self):
     #     return ",".join([str(p) for p in self.tags.all()])
     # objects = ArticleManager()

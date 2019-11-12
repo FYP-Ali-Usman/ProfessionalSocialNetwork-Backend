@@ -19,7 +19,9 @@ class Profile(models.Model):
     typeOf     =models.CharField(max_length = 10)
     organization   =models.CharField(max_length = 80, blank=True , null=True)
     about   =models.CharField(max_length = 380, blank=True , null=True)
-
+    pubInterest     =models.TextField(blank=True , null=True)
+    authInterest     =models.TextField(blank=True , null=True)
+    
     objects = ProfileManager()
 
     # def __str__(self):

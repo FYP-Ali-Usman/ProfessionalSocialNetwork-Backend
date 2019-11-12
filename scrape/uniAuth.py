@@ -1,6 +1,8 @@
 # coding: utf-8
+import math
 import re
 import urllib.request
+import urllib
 from bs4 import BeautifulSoup
 from scrape import authorExtractM
 # import authorExtractM
@@ -26,6 +28,13 @@ def load_words():
 
     return valid_words
 
+def PK_cities():
+    with open("./PK.txt") as word_file:
+#         print(word_file.read().split())
+#         valid_words = set(word_file.read().split())
+        valid_words = word_file.read().split()
+
+    return valid_words
 # if __name__ == '__main__':
 #
 # # print('contact' in english_words)
@@ -54,6 +63,11 @@ def getAuthInfoLink(url, name, advanced = False):
     #             # print(finalseqlist[finalreqlist.index(i)]+ '   '+i)
     #             authorExtractM.getAuthInfoLink(str(i), name)
 
+    returnData = {
+        'url': url,
+        'name': name,
+        'message': 'done crawling'
+    }
     english_words = load_words()
     sequence = []
     real_seq = []
@@ -71,7 +85,17 @@ def getAuthInfoLink(url, name, advanced = False):
 
     #getting uni page source
     print('Crawling url, time taken is proportional to the length of the page.')
-    html=urllib.request.urlopen(url)
+    try:
+        html=urllib.request.urlopen(url)
+    except urllib.error.HTTPError as e:
+        content = e.read()
+        # print(content)
+        returnData = {
+            'url': url,
+            'name': name,
+            'message': 'broken url'
+        }
+        print(returnData)
     soup = BeautifulSoup(html,'lxml')
     d=soup.body.findAll(text=True)
 
@@ -275,10 +299,21 @@ def getAuthInfoLink(url, name, advanced = False):
 
 
 
-    for i in finalreqlist:
-        if finalseqlist[finalreqlist.index(i)] == 'title':
+    cities = PK_cities()
+    # wrongWords = missLeadingNames()
+    for idx, i in enumerate(finalreqlist):
+        if idx < 8540:
+            continue
+        # if finalseqlist[finalreqlist.index(i)] == 'title':
+        if finalseqlist[idx] == 'title':
             #print(finalseqlist[finalreqlist.index(i)]+ '   '+i)
-            authorExtractM.getAuthInfoLink(str(i), name)
+            if '"'+str(i)+'",' not in cities:
+                if 'Dr' in str(i):
+                    # print("trying for: {}".format(str(i)[str(i).index('Dr')+len('Dr')+1::]))
+                    authorExtractM.getAuthInfoLink(str(i)[str(i).index('Dr')+len('Dr')+1::], name)
+                else:
+                    print("trying for: {}".format(str(i)))
+                    authorExtractM.getAuthInfoLink(str(i), name)
     
 
     if advanced:
@@ -287,6 +322,8 @@ def getAuthInfoLink(url, name, advanced = False):
                 pass
     authorExtractM.closeBrowserInstances()
 
+    return returnData
+    
     # tempnewlist = ['muhammad imran']
     # for i in tempnewlist:
     #     authorExtractM.getAuthInfoLink(str(i), 'name')
