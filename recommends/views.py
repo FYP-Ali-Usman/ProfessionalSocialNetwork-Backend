@@ -3,6 +3,7 @@ from bson import json_util
 import json
 from rest_framework.views import APIView
 from django.http import JsonResponse
+from rest_framework.response import Response
 from difflib import SequenceMatcher
 import pymongo
 from rest_framework import permissions
@@ -25,12 +26,19 @@ class RecommendSearch(APIView):
         query=request.GET.get('id',None)
         print(query+'ll')
         data=profileCol.find_one({"user_id":int(query)})
+        
+        if data['authInterest'] == None:
+            authInterest=[]
+        else:
+            authInterest=json.loads(data['authInterest'])
 
-        print(data)
-        authInterest=json.loads(data['authInterest'])
-        pubInterest=json.loads(data['pubInterest'])
-        print(authInterest)
-        print(pubInterest)
+        if data['pubInterest'] == None:
+            pubInterest=[]
+        else:
+            pubInterest=json.loads(data['pubInterest'])
+        # print(authInterest)
+        # print(pubInterest)
+
         getObj = {'author':authInterest,'publication':pubInterest}
         # getObj = {
         #     'author': [
@@ -96,13 +104,15 @@ class RecommendSearch(APIView):
         unsortedPublicationId = []
         unsortedPublicationRespect = []
 
-        for i in getObj['author']:
-            unsortedAuthorId.append(i['id'])
-            unsortedAuthorRespect.append(i['respect'])
+        if getObj['author'] != None:
+            for i in getObj['author']:
+                unsortedAuthorId.append(i['id'])
+                unsortedAuthorRespect.append(i['respect'])
 
-        for i in getObj['publication']:
-            unsortedPublicationId.append(i['id'])
-            unsortedPublicationRespect.append(i['respect'])
+        if getObj['publication'] != None:
+            for i in getObj['publication']:
+                unsortedPublicationId.append(i['id'])
+                unsortedPublicationRespect.append(i['respect'])
 
         # now selection sorting
         # although no need to sort, it will only help in getting things first that is mostly viewed
@@ -111,19 +121,21 @@ class RecommendSearch(APIView):
         publicationId = []
         publicationRespect = []
 
-        for i in range(len(unsortedAuthorRespect)):
-            maxx = max(unsortedAuthorRespect)
-            authorRespect.append(maxx)
-            authorId.append(unsortedAuthorId[unsortedAuthorRespect.index(maxx)])
-            unsortedAuthorId.pop(unsortedAuthorRespect.index(maxx))
-            unsortedAuthorRespect.pop(unsortedAuthorRespect.index(maxx))
+        if getObj['author'] != None:
+            for i in range(len(unsortedAuthorRespect)):
+                maxx = max(unsortedAuthorRespect)
+                authorRespect.append(maxx)
+                authorId.append(unsortedAuthorId[unsortedAuthorRespect.index(maxx)])
+                unsortedAuthorId.pop(unsortedAuthorRespect.index(maxx))
+                unsortedAuthorRespect.pop(unsortedAuthorRespect.index(maxx))
 
-        for i in range(len(unsortedPublicationRespect)):
-            maxx = max(unsortedPublicationRespect)
-            publicationRespect.append(maxx)
-            publicationId.append(unsortedPublicationId[unsortedPublicationRespect.index(maxx)])
-            unsortedPublicationId.pop(unsortedPublicationRespect.index(maxx))
-            unsortedPublicationRespect.pop(unsortedPublicationRespect.index(maxx))
+        if getObj['publication'] != None:
+            for i in range(len(unsortedPublicationRespect)):
+                maxx = max(unsortedPublicationRespect)
+                publicationRespect.append(maxx)
+                publicationId.append(unsortedPublicationId[unsortedPublicationRespect.index(maxx)])
+                unsortedPublicationId.pop(unsortedPublicationRespect.index(maxx))
+                unsortedPublicationRespect.pop(unsortedPublicationRespect.index(maxx))
 
         noOfRecommendsbyAuthor = 6
         noOfRecommendsbyPublications = 10
@@ -136,8 +148,15 @@ class RecommendSearch(APIView):
         for i in publicationRespect:
             totalPartsPUblications += i
 
-        singleAuthorPartSize = noOfRecommendsbyAuthor/totalPartsAuthor
-        singlePublicationPartSize = noOfRecommendsbyPublications/totalPartsPUblications
+        if totalPartsAuthor == 0:
+            singleAuthorPartSize = 0
+        else:
+            singleAuthorPartSize = noOfRecommendsbyAuthor/totalPartsAuthor
+
+        if totalPartsPUblications == 0:
+            singlePublicationPartSize = 0
+        else:
+            singlePublicationPartSize = noOfRecommendsbyPublications/totalPartsPUblications
 
         authorPartsDivision = {}
         publicationPartsDivision = {}
@@ -151,6 +170,7 @@ class RecommendSearch(APIView):
             publicationPartsDivision[i] = singlePart
 
         spaceLeft = noOfRecommendsbyAuthor
+        uniqueRecommendations = []
 
         returnObj = [
             {
@@ -172,7 +192,6 @@ class RecommendSearch(APIView):
             reservedPlaces = round(y)
             if reservedPlaces > 0 and spaceLeft >= 0:
                 # print('remaining no of spaces are: {}'.format(spaceLeft))
-                spaceLeft = spaceLeft - reservedPlaces
                 tempObj = {
                     'id': '',
                     'title': '',
@@ -195,57 +214,70 @@ class RecommendSearch(APIView):
                             'title': '',
                             'year': '',
                             'category': [
-                                
+
                             ],
                             'author': '',
                             'url': ''
                         }
                     ]
                     allPublicationObjects.pop()
-                    for idx1, i in enumerate(publicationList):
-                        publicationListIndexes.append(idx1)
+                    idx1 = 0
+                    for i in publicationList:
+                        idx += 1
+                        # publicationListIndexes.append(idx1)
                         tempPublication = {
                             'id': '',
                             'title': '',
                             'year': '',
                             'category': [
-                                
+
                             ],
                             'author': '',
                             'url': ''
                         }
-                        tempPublication['id'] = i['_id']
+                        tempPublication['id'] = str(i['_id'])
                         tempPublication['title'] = i['title']
                         tempPublication['year'] = i['year']
                         tempPublication['category'] = i['catogories']
                         tempPublication['author'] = tempName
                         tempPublication['url'] = i['papaerLink']
-                        allPublicationObjects.append(tempPublication)
+                        if i['title'] not in uniqueRecommendations:
+                            publicationListIndexes.append(idx1)
+                            uniqueRecommendations.append(i['title'])
+                            allPublicationObjects.append(tempPublication)
                     if spaceLeft < 0:
                         toBeRemoved = 0
                         for i in range(0, spaceLeft, -1):
                             toBeRemoved += 1
-                        for i in random.sample(publicationListIndexes, len(range(reservedPlaces - toBeRemoved))):
-                            returnObj.append(allPublicationObjects[i])
+                        if len(publicationListIndexes) >= len(range(reservedPlaces - toBeRemoved)):
+                            for i in random.sample(publicationListIndexes, len(range(reservedPlaces - toBeRemoved))):
+                                returnObj.append(allPublicationObjects[i])
+                        else:
+                            for i in random.sample(publicationListIndexes, len(publicationListIndexes)):
+                                returnObj.append(allPublicationObjects[i])
                     else:
-        #                 print(random.sample(publicationListIndexes,len(range(reservedPlaces))))
-                        for i in random.sample(publicationListIndexes,len(range(reservedPlaces))):
-                            # print(i)
-        #                     print(publicationList[i])
-        #                     print(publicationList.count())
-        #                     print(publicationList)
-        #                     for idx2, j in enumerate(publicationList):
-        #                         if idx2 == i:
-        #                             print('running if')
-        #                             print(j)
-        #                     print(allPublicationObjects[i])
-                            returnObj.append(allPublicationObjects[i])
+                        if len(publicationListIndexes) >= len(range(reservedPlaces)):
+                            for i in random.sample(publicationListIndexes,len(range(reservedPlaces))):
+            #                     print(publicationList[i])
+            #                     print(publicationList.count())
+            #                     print(publicationList)
+            #                     for idx2, j in enumerate(publicationList):
+            #                         if idx2 == i:
+            #                             print('running if')
+            #                             print(j)
+            #                     print(allPublicationObjects[i])
+                                returnObj.append(allPublicationObjects[i])
 
-        #                     tempObj['id'] = str(publicationList[i]['_id'])
-        #                     tempObj['title'] = publicationList[i]['title']
-        #                     tempObj['year'] = publicationList[i]['year']
-        #                     tempObj['category'] = publicationList[i]['category']
-        #                     print(tempObj)
+            #                     tempObj['id'] = str(publicationList[i]['_id'])
+            #                     tempObj['title'] = publicationList[i]['title']
+            #                     tempObj['year'] = publicationList[i]['year']
+            #                     tempObj['category'] = publicationList[i]['category']
+            #                     print(tempObj)
+                        else:
+                            for i in random.sample(publicationListIndexes,len(publicationListIndexes)):
+                                returnObj.append(allPublicationObjects[i])
+                                
+                spaceLeft = spaceLeft - reservedPlaces
 
         # Publication that takes 20% space will be returned 
         spaceLeft = noOfRecommendsbyPublications
@@ -265,7 +297,7 @@ class RecommendSearch(APIView):
                 if y > twentyfivePercentPublication:
                     # reserve one place from history
                     thisPublication = pubCol.find_one({'_id': ObjectId(x)})
-                    
+
                     tempObj['id'] = x
                     tempObj['title'] = thisPublication['title']
                     tempObj['year'] = thisPublication['year']
@@ -273,19 +305,19 @@ class RecommendSearch(APIView):
                     thisAuthor = authorCol.find_one({'_id': thisPublication['author']})
                     tempObj['author'] = thisAuthor['Name']
                     tempObj['url'] = thisPublication['papaerLink']
-                    returnObj.append(tempObj)
-                    
-                    publicationPartsDivision[x] = y - 1
-                    spaceLeft = spaceLeft - 1
-                
+                    if thisPublication['title'] not in uniqueRecommendations:
+                        uniqueRecommendations.append(thisPublication['title'])
+                        returnObj.append(tempObj)
+                        publicationPartsDivision[x] = y - 1
+                        spaceLeft = spaceLeft - 1
+
         allCategories = []
-                    
         # all the categoires of publications are added
 
         for x, y in publicationPartsDivision.items():
             thisPublication = pubCol.find_one({'_id': ObjectId(x)})
             allCategories += allCategories + thisPublication['catogories']
-            
+
         # see that max number of categories size in our db
 
         maxSize = 0
@@ -296,42 +328,60 @@ class RecommendSearch(APIView):
 
         # print('spaceLeft is : {}'.format(spaceLeft))
 
-        requiredPublications = spaceLeft
+        # requiredPublications = spaceLeft
         searchMixedCategories = [2,3]
         uniquePublications = []
+        timesLoopRuns = 0
+        timesLoopRuns2 = 0
 
-        while requiredPublications > 0:
-            tempObj = {
-                'id': '',
-                'title': '',
-                'year': '',
-                'category': [],
-                'author': '',
-                'url': ''
-            }
-            thisCategory = random.sample(allCategories, random.sample(searchMixedCategories,1)[0])
-            thisPublication = pubCol.find({"catogories": {"$all": thisCategory}})
-            if thisPublication.count() >= 1:
-                selectedPublication = random.sample(list(thisPublication), 1)
-                if selectedPublication[0]['title'] not in uniquePublications:
-                    tempObj['id'] = str(selectedPublication[0]['_id'])
-                    tempObj['title'] = selectedPublication[0]['title']
-                    tempObj['year'] = selectedPublication[0]['year']
-                    tempObj['category'] = thisCategory
-                    thisAuthor = authorCol.find_one({'_id': selectedPublication[0]['author']})
-                    tempObj['author'] = thisAuthor['Name']
-                    tempObj['url'] = selectedPublication[0]['papaerLink']
-                    returnObj.append(tempObj)
-                    uniquePublications.append(selectedPublication[0]['title'])
-                    requiredPublications -= 1
-            
+        if getObj['publication'] != None:
+            while spaceLeft > 0:
+                tempObj = {
+                    'id': '',
+                    'title': '',
+                    'year': '',
+                    'category': [],
+                    'author': '',
+                    'url': ''
+                }
+                oneOrTwo = random.sample(searchMixedCategories,1)[0]
+                if len(allCategories) >= oneOrTwo:
+                    thisCategory = random.sample(allCategories, oneOrTwo)
+                else:
+                    thisCategory = random.sample(allCategories, len(allCategories))
+                thisPublication = pubCol.find({"catogories": {"$all": thisCategory}})
+                selectedPublication = []
+                if thisPublication.count() >= 1:
+                    selectedPublication = random.sample(list(thisPublication), 1)
+                    if selectedPublication[0]['title'] not in uniquePublications:
+                        timesLoopRuns = 0
+                        tempObj['id'] = str(selectedPublication[0]['_id'])
+                        tempObj['title'] = selectedPublication[0]['title']
+                        tempObj['year'] = selectedPublication[0]['year']
+                        tempObj['category'] = thisCategory
+                        thisAuthor = authorCol.find_one({'_id': selectedPublication[0]['author']})
+                        tempObj['author'] = thisAuthor['Name']
+                        tempObj['url'] = selectedPublication[0]['papaerLink']
+                        if selectedPublication[0]['title'] not in uniqueRecommendations:
+                            returnObj.append(tempObj)
+                            uniquePublications.append(selectedPublication[0]['title'])
+                            spaceLeft -= 1
+                        else: #this else will run if it only gets 1 publication again and again to stop the while loop
+                            timesLoopRuns2 += 1
+                            if timesLoopRuns2 == 5:
+                                break
+                    else:
+                        timesLoopRuns += 1
+                        if timesLoopRuns == 10:
+                            break
+
         # for i in returnObj:
         #     print(i)
         #     print('\n\n')
 
         page_sanitized = json.loads(json_util.dumps(returnObj))
         # print(authorReturnCopy)
-        return JsonResponse(page_sanitized)
+        return Response(page_sanitized)
 
 
 def recommend(request):

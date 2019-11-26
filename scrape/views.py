@@ -46,7 +46,7 @@ def search_author(request):
         serializer = URLSerializer(data=data)
         # authorExtractM.singleAuthorCrawl(data[0][:data[0].index('publication')+11:])
         for i in data:
-            # authorExtractM.singleAuthorCrawl(i[:i.index('publication')+11:])
+            authorExtractM.singleAuthorCrawl(i[:i.index('publication')+11:])
             print(i[:i.index('publication')+11:])
         data = {
             'message': "Please refresh your browser"

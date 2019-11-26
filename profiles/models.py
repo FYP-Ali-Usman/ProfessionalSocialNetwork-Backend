@@ -21,6 +21,7 @@ class Profile(models.Model):
     about   =models.CharField(max_length = 380, blank=True , null=True)
     pubInterest     =models.TextField(blank=True , null=True)
     authInterest     =models.TextField(blank=True , null=True)
+    favouriteAuthors     =models.TextField(blank=True , null=True)
     
     objects = ProfileManager()
 

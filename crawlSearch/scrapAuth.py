@@ -51,9 +51,9 @@ check2=True
 options = FirefoxOptions()
 options.add_argument("--headless")
 
-driver = webdriver.Firefox(options=options, executable_path=r'E:\\project\\Python\\FYP\\Test\\scrape\\geckodriver.exe')
+driver = webdriver.Firefox(options=options,executable_path=r'E:\\project\\Python\\FYP\\Test\\scrape\\geckodriver.exe')
 
-newCoauthDriver = webdriver.Firefox(options=options, executable_path=r'E:\\project\\Python\\FYP\\Test\\scrape\\geckodriver.exe')
+newCoauthDriver = webdriver.Firefox(options=options,executable_path=r'E:\\project\\Python\\FYP\\Test\\scrape\\geckodriver.exe')
 
 
 def closeBrowserInstances():
