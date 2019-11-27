@@ -1257,7 +1257,7 @@ def entity(request):
             uniqueStartNode = []
             uniqueEndNode = []
             uniqueResults = []
-            # print(totalNodes)
+            # print('TOTAL NODES are: {}'.format(totalNodes))
 
             for idx3, j in enumerate(totalNodes[:-1:]):
                 currentStartNode = j
@@ -1354,6 +1354,7 @@ def entity(request):
                             if currentStartNodeURL == personURL:
                                 # pathsFromPersonURL[currentEndNode].append()
                                 pathsFromPersonURL[currentEndNode].append(result[idx])
+                                print(pathsFromPersonURL)
                     noOfShortestPaths.append(noOfShortestDistances)
 
                     sumOfDistanceOfAllNodesFromJ += shortestDistance
@@ -1434,6 +1435,7 @@ def entity(request):
 
         ########## code for the closeness and betweenness cardanility calculation ends here ##########
 
+        # print(authorReturnCopy)
         page_sanitized = json.loads(json_util.dumps(authorReturnCopy))
         # print(authorReturnCopy)
         return JsonResponse(page_sanitized)

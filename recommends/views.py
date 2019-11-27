@@ -496,7 +496,7 @@ def recommend(request):
             else:
                 tempIndex = uniqueTitles.index(i['title'])
                 if i['category'] not in uniqueCategories[tempIndex]:
-                    uniqueCategories[uniqueIds.index(i['id'])].append(i['category'])
+                    uniqueCategories[uniqueTitles.index(i['title'])].append(i['category'])
 
         for idx, i in enumerate(uniqueIds):
             # print('id: {}, title: {}, year: {}, category: {}'.format(uniqueIds[idx], uniqueTitles[idx], uniqueYears[idx], uniqueCategories[idx]))
