@@ -47,9 +47,9 @@ check2=True
 options = FirefoxOptions()
 options.add_argument("--headless")
 
-driver = webdriver.Firefox(options=options, executable_path=r'E:\\project\\Python\\FYP\\Test\\scrape\\geckodriver.exe')
+driver = webdriver.Firefox(executable_path=r'E:\\project\\Python\\FYP\\Test\\scrape\\geckodriver.exe')
 
-newCoauthDriver = webdriver.Firefox(options=options, executable_path=r'E:\\project\\Python\\FYP\\Test\\scrape\\geckodriver.exe')
+newCoauthDriver = webdriver.Firefox(executable_path=r'E:\\project\\Python\\FYP\\Test\\scrape\\geckodriver.exe')
 
 
 def closeBrowserInstances():
@@ -115,7 +115,8 @@ def authProfileGet(startSearch,name4):
             print(names)
             if(names!=None):
                 tx=re.search(".*"+str(a)+".*",names.get_text().strip().lower())
-                if (tx):
+                ttt=True
+                if (ttt):
                     href = names.attrs['href']
                     url = 'https://academic.microsoft.com/' + href
                     # authProfile['Name'] = names.get_text().strip()
@@ -463,6 +464,7 @@ def scrapProfile(lliik):
         name = soup.find('div', {'class': 'name-section'}).find('div', {'class': 'name'}).get_text().strip()
     except AttributeError as e:
         print('Crawling stoped due to network problem')
+        name=''
     try:
         affiliation = soup.find('a',
                                 {'class': 'au-target', 'data-appinsights-action': 'Institution'}).get_text().strip()

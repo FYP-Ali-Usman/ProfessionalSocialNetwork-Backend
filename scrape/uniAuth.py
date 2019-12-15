@@ -336,21 +336,20 @@ def getAuthInfoLink(url, name, advanced = False):
 
 
 
-    # cities = PK_cities()
-    # # wrongWords = missLeadingNames()
-    # for idx, i in enumerate(finalreqlist):
-    #     if idx < 8540:
-    #         continue
-    #     # if finalseqlist[finalreqlist.index(i)] == 'title':
-    #     if finalseqlist[idx] == 'title':
-    #         #print(finalseqlist[finalreqlist.index(i)]+ '   '+i)
-    #         if '"'+str(i)+'",' not in cities:
-    #             if 'Dr' in str(i):
-    #                 # print("trying for: {}".format(str(i)[str(i).index('Dr')+len('Dr')+1::]))
-    #                 authorExtractM.getAuthInfoLink(str(i)[str(i).index('Dr')+len('Dr')+1::], name)
-    #             else:
-    #                 print("trying for: {}".format(str(i)))
-    #                 authorExtractM.getAuthInfoLink(str(i), name)
+    cities = PK_cities()
+    # wrongWords = missLeadingNames()
+    for idx, i in enumerate(finalreqlist):
+        
+        # if finalseqlist[finalreqlist.index(i)] == 'title':
+        if finalseqlist[idx] == 'title':
+            #print(finalseqlist[finalreqlist.index(i)]+ '   '+i)
+            if '"'+str(i)+'",' not in cities:
+                if 'Dr' in str(i):
+                    # print("trying for: {}".format(str(i)[str(i).index('Dr')+len('Dr')+1::]))
+                    authorExtractM.getAuthInfoLink(str(i)[str(i).index('Dr')+len('Dr')+1::], name)
+                else:
+                    print("trying for: {}".format(str(i)))
+                    authorExtractM.getAuthInfoLink(str(i), name)
     
 
     # if advanced:

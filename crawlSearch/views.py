@@ -9,6 +9,8 @@ from accounts.api.permissions import IsOwnerOrReadOnly
 from rest_framework import permissions
 from rest_framework.decorators import api_view, throttle_classes, permission_classes
 import json
+import urllib.request
+import urllib.parse
 from bson import ObjectId
 import re
 from crawlSearch import scrapAuth
@@ -118,8 +120,8 @@ def yeildMethod2(query):
     }
     global uniqueAuthors
     uniqueAuthors = []
-    # for i in range(1):
-    #     scrapAuth.getAuthInfoLink(query)
+    for i in range(1):
+        scrapAuth.getAuthInfoLink(query)
     data1=authorCol.find({"Name": re.compile(".*"+query+".*", re.IGNORECASE)})
     for i in data1:
         if i['Name'] not in uniqueAuthors:
@@ -169,12 +171,19 @@ class CoautherSearch(APIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
     def get(self, request, format=None):
         query=str(request.GET.get('url',None))
+        query2=str(request.GET.get('name',None))
         print(query)
-        urll=str(query[:query.index('publication')+11:])
-        print(urll)
-        for i in range(1):
-            authorExtractl.singleAuthorCrawl(urll)
-        data1=authorCol.find({'urlLink': urll}, {'urlLink': 1})
+        urlll=str(query[:query.index('publication')+11:])
+        print(urlll)
+        data1=authorCol.find({'urlLink': urlll})
+        if data1.count() < 1:
+            # namme = urllib.parse.quote(query2)
+            # urll=urlll+'/search?q='+namme
+            urll=urlll+'/search'
+            print(urll)
+            for i in range(1):
+                authorExtractl.singleAuthorCrawl(urll)
+            data1=authorCol.find({'urlLink': urll})
         authors=[]
         for i in data1:
             data2=json.dumps(i, default=json_util.default)

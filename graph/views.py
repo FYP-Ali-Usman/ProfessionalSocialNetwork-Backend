@@ -290,13 +290,14 @@ def generateAuthorNetwork(personURL, org, expand):
     # if he is not the main entity in our db then he may be present in our publications
     # is said "may be" because some user may directly put the URl into the link without searching on our web
 
+
     if authorCol.find({"urlLink": personURL}).count() > 0:
         print(authorCol.find({"urlLink": personURL}).count())
 
         for x in authorCol.find({"urlLink": personURL}):
             if x['_id'] not in totalUniqueAuthors:
                 totalUniqueAuthors.append(str(x['_id']))
-            authorFullCopy['authors'].append(x)
+                authorFullCopy['authors'].append(x)
             # authorNetwork['authors'].append(x['_id'])
 
             for j in pubCol.find({'author': x['_id']}):
@@ -309,10 +310,10 @@ def generateAuthorNetwork(personURL, org, expand):
                     for k in j['coAuthors']:
                         # see if this coauthor is also an author in our db
                         for l in authorCol.find({'Name': k['name'], 'urlLink': k['linkUrl'][:k['linkUrl'].index('publication')+11:]}):
-                            print(l['_id'])
+                            print('found {} as author {},{}'.format(k['name'], l['_id'], l['Name']))
                             if l['_id'] not in totalUniqueAuthors:
                                 totalUniqueAuthors.append(str(l['_id']))
-                            authorFullCopy['authors'].append(l)
+                                authorFullCopy['authors'].append(l)
                             for m in pubCol.find({'author': l['_id']}):
                                 authorFullCopy['publications'].append(m)  # may insert duplicate but we'll clean it later
 
@@ -323,11 +324,12 @@ def generateAuthorNetwork(personURL, org, expand):
                                 for m in authorCol.find({'Name': l[
                                     '_id']}):  # although no need for loop as this list will contain only one element, but same case exist on many other places on this file so i stick to one way
                                     if m['_id'] not in totalUniqueAuthors:
+                                        print('found {} as coauthor where author is {},{}'.format(k['name'], m['_id'], m['Name']))
                                         totalUniqueAuthors.append(str(m['_id']))
-                                    authorFullCopy['authors'].append(m)
+                                        authorFullCopy['authors'].append(m)
 
     else:
-
+        # this else is very good but unusable in our condition as we are crawlig first
         for x in pubCol.find({"coAuthors.linkUrl": personURL}):
             print(authorCol.find({'_id': x['author']}).count())
             for j in authorCol.find({'_id': x['author']}):  # loop will run one time
@@ -339,6 +341,11 @@ def generateAuthorNetwork(personURL, org, expand):
                     authorFullCopy['publications'].append(k)
 
     # print(authorFullCopy)
+    # for i in authorFullCopy['authors']:
+    #     print(i['Name'])
+    # for i in authorFullCopy['publications']:
+    #     for j in i['coAuthors']:
+    #         print(j['name'])
 
 
 # coppied from https://stackoverflow.com/questions/33469897/dfs-to-implement-a-graph-python
@@ -955,7 +962,7 @@ def entity(request):
         authorReturnCopy['nodes'].pop(0)
         # print(authorReturnCopy['nodes'])
 
-        print(totalUniqueAuthors)
+        # print(totalUniqueAuthors)
         number_of_colors = totalUniqueAuthors
         color = []
 
@@ -975,12 +982,24 @@ def entity(request):
 
         # removing duplicate publications
 
-        seenPublications = set()
+        seenPublications = []
         uniquePublications = []
         for obj in authorFullCopy['publications'][1:]:
-            if obj['_id'] not in seenPublications:
+            if obj not in seenPublications:
                 uniquePublications.append(obj)
-                seenPublications.add(obj['_id'])
+                seenPublications.append(obj)
+            else:
+                print('Duplication found in publication.')
+
+        # Below 6 lines can not work because ID is already unique
+
+        # seenPublications = set()
+        # uniquePublications = []
+        # for obj in authorFullCopy['publications'][1:]:
+        #     if obj['_id'] not in seenPublications:
+        #         uniquePublications.append(obj)
+        #         seenPublications.add(obj['_id'])
+
         # for j in uniquePublications:
         #     for k in j['coAuthors']:
         #         print(k['name'])
@@ -989,11 +1008,26 @@ def entity(request):
         # print("tempIds are here.", tempIds)
         # print(len(uniquePublications))
         # for j in authorFullCopy['publications'][1:]:
+        
+        # for l in authorFullCopy['authors'][1:]:
+        #     print(l['urlLink'])
+        sourceD = []
+        targetD = []
         for j in uniquePublications:
             # print(len(j['coAuthors']))
             for k in j['coAuthors']:
                 # print("k-coauthors are here.",k['name'])
 
+                print('kmncnbc')
+                print(totalUniqueAuthors)
+                print(color)
+                if str(j['author']) in totalUniqueAuthors:
+                    if totalUniqueAuthors.index(str(j['author'])) <= len(color):
+                        colorString = color[totalUniqueAuthors.index(str(j['author']))]
+                    else:
+                        colorString = '#000000'
+                else:
+                    colorString = '#000000'
                 tempNodes = {
                     'id': '',
                     'name': '',
@@ -1018,7 +1052,8 @@ def entity(request):
                     'overview': '',
                     'catogories': [],
                     'papaerLink': '',
-                    'color': color[totalUniqueAuthors.index(str(j['author']))]
+                    # 'color': color[totalUniqueAuthors.index(str(j['author']))]
+                    'color': colorString
                 }
 
                 # print(color[totalUniqueAuthors.index(str(j['author']))])
@@ -1030,32 +1065,62 @@ def entity(request):
                 tempLinksNodes['papaerLink'] = j['papaerLink']
                 tempLinksNodes['source'] = str(j['author'])
 
-                # print("kLink: ",k['linkUrl'][:k['linkUrl'].index('publication')+11:])
-                if k['linkUrl'][:k['linkUrl'].index('publication')+11:] not in tempLinks:  # if this is a coauthor
+                foundInAuthors = False
+                for l in authorFullCopy['authors'][1:]:
+                    if k['linkUrl'][:k['linkUrl'].index('publication')+11:] == l['urlLink']:
+                        # print(k['linkUrl'][:k['linkUrl'].index('publication')+11:])
+                        # print('found coAuthor {} as author {}'.format(k['name'], str(l['_id'])))
+                        foundInAuthors = True
+                        tempLinksNodes['target'] = str(l['_id'])
 
-                    tempNodes['id'] = str(idx1) + str(idx1) + str(idx1)
-                    tempNodes['name'] = k['name']
-                    tempNodes['group'] = 0
-                    tempNodes['urlLink'] = k['linkUrl']
-                    authorReturnCopy['nodes'].append(tempNodes)
+                # print("{} for {}".format(foundInAuthors, str(l['_id'])))
+                if foundInAuthors == False:
 
-                    tempLinks.append(k['linkUrl'][:k['linkUrl'].index('publication')+11:])
-                    tempIds.append(tempNodes['id'])
-                    tempLinksNodes['target'] = tempNodes['id']
+                    # print("kLink: ",k['linkUrl'][:k['linkUrl'].index('publication')+11:])
+                    if k['linkUrl'][:k['linkUrl'].index('publication')+11:] not in tempLinks:  # if this is a coauthor
 
-                elif k['linkUrl'][:k['linkUrl'].index('publication')+11:] in tempLinks:
-                    idx2 = tempLinks.index(k['linkUrl'][:k['linkUrl'].index('publication')+11:])
-                    # print(k['linkUrl'][:k['linkUrl'].index('publication') + 11:])
-                    # print(k['name'])
-                    # print(str(tempIds[idx2]))
-                    tempLinksNodes['target'] = str(tempIds[idx2])
+                        tempNodes['id'] = str(idx1) + str(idx1) + str(idx1)
+                        tempNodes['name'] = k['name']
+                        tempNodes['group'] = 0
+                        tempNodes['urlLink'] = k['linkUrl']
+                        authorReturnCopy['nodes'].append(tempNodes)
 
+                        tempLinks.append(k['linkUrl'][:k['linkUrl'].index('publication')+11:])
+                        tempIds.append(tempNodes['id'])
+                        tempLinksNodes['target'] = tempNodes['id']
+
+                    elif k['linkUrl'][:k['linkUrl'].index('publication')+11:] in tempLinks:
+                        idx2 = tempLinks.index(k['linkUrl'][:k['linkUrl'].index('publication')+11:])
+                        # print(k['linkUrl'][:k['linkUrl'].index('publication') + 11:])
+                        # print(k['name'])
+                        # print(str(tempIds[idx2]))
+                        tempLinksNodes['target'] = str(tempIds[idx2])
+
+
+                # if str(j['_id']) in targetD:
+                #     indexx = targetD.index(str(j['_id']))
+                #     if sourceD[indexx] == str(j['author']):
+
+                same = False
+                for indexx, l in enumerate(targetD):
+                    if tempLinksNodes['target'] == l:
+                        if sourceD[indexx] == tempLinksNodes['source']:
+                            same = True
+                        
+                # print(tempLinksNodes['source'])
+                # print(tempLinksNodes['target'])
                 # print(tempLinksNodes)
-                authorReturnCopy['links'].append(tempLinksNodes)
+                if same == False:
+                    authorReturnCopy['links'].append(tempLinksNodes)
+                    sourceD.append(tempLinksNodes['source'])
+                    targetD.append(tempLinksNodes['target'])
 
                 idx1 += 1
                 idx += 1
         authorReturnCopy['links'].pop(0)
+        # print('\n')
+        # print(authorReturnCopy)
+        # print('\n')
 
         ########### Code for filling the authorReturnCopy ends here ############
 
@@ -1081,7 +1146,7 @@ def entity(request):
         for i in authorReturnCopy['links']:
 
             # the purpose is to pick one element and develop a relation of it with any subnetwork
-
+            
             match = 0
             tempid = 0
             for j in newArrangement['subNetworks'][::-1]:  # check if record already exists in one subnetwork
@@ -1094,6 +1159,9 @@ def entity(request):
                 # elif i['target'] in j['coauthors']:
                 elif str(i['target']) in str(j['coauthors']):
                     match = 2
+                    break
+                elif str(i['source']) in str(j['coauthors']):
+                    match = 3
                     break
 
             tempArrangement = {
@@ -1132,6 +1200,19 @@ def entity(request):
                             j['authors'].append(i['source'])
                         j['relations'].append(temprelation)
                         break
+                    
+            elif match == 3:
+                for j in newArrangement['subNetworks'][::-1]:
+                    if j['no_id'] == tempid:
+                        if i['target'] not in j['coauthors']:
+                            j['coauthors'].append(i['target'])
+                        temprelation = {
+                            'a_id': i['source'],
+                            'ca_id': i['target'],
+                            'distance': 2
+                        }
+                        j['relations'].append(temprelation)
+                        break
 
             else:
                 # save as new network with tempid += 1
@@ -1143,8 +1224,9 @@ def entity(request):
                 tempArrangement['relations'].append(temprelation)
 
                 newArrangement['subNetworks'].append(tempArrangement)
-
+            # print(newArrangement['subNetworks'])
         # print(newArrangement)
+        print(len(newArrangement['subNetworks']))
 
         ######## ends the code of the filling of newArrangement ########
 
@@ -1198,7 +1280,7 @@ def entity(request):
                 i['degreeCentrality'] = fullAuthorNumbers[fullAuthorId.index(i['id'])]
             elif i['id'] in fullCoauthorId:
                 i['degreeCentrality'] = fullCoauthorNumbers[fullCoauthorId.index(i['id'])]
-
+        # print(authorReturnCopy['nodes'])
         ########## code for the degree cardanility calculation ends here ##########
 
         ######### code for the closeness and betweenness cardanility calculation begins here #########
@@ -1215,6 +1297,8 @@ def entity(request):
         for i in newArrangement['subNetworks']:
 
             totalNodes = i['authors'] + i['coauthors']
+
+
             # if (len(totalNodes) != len(set(totalNodes))):
             #     print('total nodes: {}, duplicate'.format(len(totalNodes)))
             # else:
@@ -1246,12 +1330,12 @@ def entity(request):
                     graph[j['ca_id']].append(j['a_id'])
                 if j['ca_id'] not in graph[j['a_id']]:
                     graph[j['a_id']].append(j['ca_id'])
-            # print(len(graph))
+            print(len(graph))
 
             allShortestPaths = []  # all shortest paths between 2 nodes
             noOfShortestPaths = []  # e.g first element is 2 then first 2 lists in allShortestPaths are between same nodes
 
-            # pprint.pprint(graph)
+            pprint.pprint(graph)
             # print(graph)
 
             uniqueStartNode = []
@@ -1354,7 +1438,7 @@ def entity(request):
                             if currentStartNodeURL == personURL:
                                 # pathsFromPersonURL[currentEndNode].append()
                                 pathsFromPersonURL[currentEndNode].append(result[idx])
-                                print(pathsFromPersonURL)
+                                # print(pathsFromPersonURL)
                     noOfShortestPaths.append(noOfShortestDistances)
 
                     sumOfDistanceOfAllNodesFromJ += shortestDistance
